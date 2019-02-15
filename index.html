@@ -1,0 +1,224 @@
+<html>
+	<head>
+		<title>迷你太阳系</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		<script src="https://cdn.bootcss.com/three.js/r83/three.js"></script>
+		<script src="./js/control.js"></script>
+		<script src="./js/OBJLoader.js"></script>
+		<script>
+			var renderer // 渲染器
+			function initRender () {
+				renderer = new THREE.WebGLRenderer({ antialias: true })
+				renderer.setSize(window.innerWidth, window.innerHeight) // 渲染大小
+				document.body.appendChild(renderer.domElement) // 渲染器添加到网页
+			}
+
+			var scene // 场景
+			function initScene () {
+				scene = new THREE.Scene()
+				var texture = new THREE.ImageUtils.loadTexture('./img/yuzhou4.jpg')
+				texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+				// texture.repeat.set( 3, 3 );
+				// texture.anisotropy = 16;
+				scene.background = texture
+			}
+
+			var universe // 宇宙
+			function initUniverse () {
+				var geometry = new THREE.SphereGeometry( 30, 100, 100) // 几何体 (模型)TorusGeometry
+				var texture = new THREE.ImageUtils.loadTexture('./img/yuzhou4.webp')
+      	var material = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide, transparent: true, opacity: 0.5})
+				universe = new THREE.Mesh( geometry, material ) // 网格
+				universe.position.z = 0
+				scene.add(universe)
+			}
+
+      var camera // 相机
+			function initCamera () {
+				camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000)
+				camera.position.z = 20 // 设置相机位置
+			}
+			var controls // 控制器(鼠标交互)
+			function initControls () {
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.addEventListener( 'change', renderer.render( scene, camera ) ); // use only if there is no animation loop
+				controls.minDistance = -10;
+				controls.maxDistance = 100;
+				controls.enablePan = false;
+			}
+
+			var light1, light2 // 灯光
+			function initLight () {
+				// 创建点光源
+				var light1 = new THREE.PointLight(0xffffff, 3, 1000)
+				var light2 = new THREE.PointLight(0xffffff, 3, 1000)
+				light1.position.set(0, 0, 8)
+				light2.position.set(0, 0, -8)
+				scene.add(light1)
+				scene.add(light2)
+			}
+
+			// 可添加更多行星 添加一个行星对应添加一个相对太阳的轴 由此可以控制行星的公转速度、方向等
+			var earthAxios, jupiterAxios
+			function initSunAxios () { // 相对太阳中心的轴
+				jupiterAxios = new THREE.Object3D()
+				jupiterAxios.position.z = 0 // 相对于场景的位置
+				scene.add(jupiterAxios)
+				earthAxios = new THREE.Object3D()
+				earthAxios.position.z = 0 // 相对于场景的位置
+				scene.add(earthAxios)
+			}
+
+			var moonAxios, satelliteAxios// 相对地球中心轴
+			function initEarthAxios () {
+				moonAxios = new THREE.Object3D()
+				moonAxios.position.x = 7 // 相对于太阳中心轴的位置
+				earthAxios.add(moonAxios) // 将地球中心轴添加到太阳中心轴
+				satelliteAxios = new THREE.Object3D() // 卫星绕地轴
+				satelliteAxios.position.x = 7
+				earthAxios.add(satelliteAxios)
+			}
+
+			var sun; // 太阳
+			function initSun() {
+				var geometry = new THREE.SphereGeometry( 2, 100, 100) // 几何体 (模型)TorusGeometry
+				var texture = new THREE.ImageUtils.loadTexture('./img/sun1.jpg')
+      	var material = new THREE.MeshLambertMaterial({map: texture, emissive: 0xff4500}) // 网格材料 (材质)FF4500
+				sun = new THREE.Mesh( geometry, material ) // 网格
+				sun.position.z = 0
+				scene.add(sun)
+			}
+
+			var jupiter // 木星Jupiter
+			function initJupiter () {
+				var geometry = new THREE.SphereGeometry( 0.8, 100, 100) // 几何体 (模型)TorusGeometry
+				var texture = new THREE.ImageUtils.loadTexture('./img/jupiter.jpg')
+      	var material = new THREE.MeshLambertMaterial({map: texture, transparent: true, opacity: 1}) // 网格材料 (材质)
+				jupiter = new THREE.Mesh( geometry, material ) // 网格
+				jupiter.position.x = 13 // 相对于太阳中心轴的位置
+				jupiterAxios.add(jupiter) // 将地球添加太阳中心轴
+				// 运行轨迹
+				var geometry = new THREE.TorusBufferGeometry( 13, 0.01, 16, 100 );
+				var material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+				var torus = new THREE.Mesh( geometry, material );
+				torus.rotation.x = Math.PI / 2
+				jupiterAxios.add( torus );
+			}
+
+			var earth // 地球
+			function initEarth () {
+				var geometry = new THREE.SphereGeometry( 0.4, 100, 100) // 几何体 (模型)TorusGeometry
+				var texture = new THREE.ImageUtils.loadTexture('./img/earth.jpg')
+      	var material = new THREE.MeshLambertMaterial({map: texture, transparent: true, opacity: 1}) // 网格材料 (材质)
+				earth = new THREE.Mesh( geometry, material ) // 网格
+				earth.position.x = 7 // 相对于太阳中心轴的位置(距离太阳半径)
+				earthAxios.add(earth) // 将地球添加太阳中心轴
+				// 运行轨迹
+				var geometry = new THREE.TorusBufferGeometry( 7, 0.01, 16, 100 );
+				var material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+				var torus = new THREE.Mesh( geometry, material );
+				torus.rotation.x = Math.PI / 2
+				earthAxios.add( torus );
+			}
+
+			var moon // 月球
+			function initMoon () {
+				var geometry = new THREE.SphereGeometry( 0.1, 100, 100) // 几何体 (模型)TorusGeometry
+				var texture = new THREE.ImageUtils.loadTexture('./img/moon2.jpg')
+      	var material = new THREE.MeshLambertMaterial({map: texture, transparent: true, opacity: 1}) // 网格材料 (材质)
+				moon = new THREE.Mesh( geometry, material ) // 网格
+				moon.position.x = 0.6 // 相对于地球中心轴的位置
+				moonAxios.add(moon)
+			}
+
+			var satellite // 绕地卫星
+			function initSatellite () {
+				var manager = new THREE.LoadingManager();
+				manager.onProgress = function ( item, loaded, total ) {
+					console.log( item, loaded, total )
+				}
+				var onProgress = function ( xhr ) {
+					if ( xhr.lengthComputable ) {
+						var percentComplete = xhr.loaded / xhr.total * 100;
+						console.log( Math.round(percentComplete, 2) + '% downloaded' )
+					}
+				}
+				var onError = function ( xhr ) {
+				}
+				var loader = new THREE.OBJLoader( manager );
+				loader.load( './models/satellite/10477_Satellite_v1_L3.obj', function ( object ) {
+					object.traverse( function ( child ) {
+						if ( child instanceof THREE.Mesh ) {
+							child.material.map = new THREE.ImageUtils.loadTexture('./models/satellite/10477_Satellite_v1_Diffuse.jpg')
+						}
+					} )
+					object.position.x = 0.45
+					object.scale.x = object.scale.y = object.scale.z = 0.00008
+					// object.rotation.x = Math.PI / 2
+					object.rotation.z = Math.PI / 2
+					satellite = object
+					satelliteAxios.add( satellite )
+				}, onProgress, onError )
+			}
+
+			var text // 文字
+			function initText () {
+				var loader = new THREE.FontLoader(); // 字体加载器
+				loader.load( './font/cn-fan.json', function ( font ) {
+					var geometry = new THREE.TextGeometry('宇宙', {
+						font, size: 0.6, 
+						height: 0.05,
+						curveSegments: 0.1,
+						bevelEnabled: false,
+						bevelThickness: 0.05,
+						bevelSize: 0.1,
+						bevelSegments: 1
+					})
+					var material = new THREE.MeshLambertMaterial({ color: 0x000000, emissive: 0x999999})
+					text = new THREE.Mesh( geometry, material ) // 网格
+					text.position.x = -15
+					text.position.y = 6
+					scene.add(text)
+				} )
+			}
+
+			function animate() { // 动画
+				requestAnimationFrame(animate)
+				sun.rotation.y += 0.01 // 控制太阳自转
+				earth.rotation.y += 0.01 // 控制地球自转
+				moon.rotation.y += 0.01 // 控制月球自转
+				satellite.rotation.y += 0.01 // 控制卫星自转
+				moonAxios.rotation.z += 0.02 // 控制月球公转
+				satelliteAxios.rotation.z += 0.04 // 控制卫星公转
+				earthAxios.rotation.y += 0.005 // 控制地球公转
+				jupiterAxios.rotation.y += 0.001 // 控制木星公转
+				renderer.render(scene, camera) // 渲染场景和相机
+			}
+
+			function draw () {
+				initRender() // 渲染器
+				initScene() // 场景
+				initUniverse() // 宇宙
+				initCamera() // 相机
+				initLight() // 灯光
+				initControls() // 控制器
+				initSunAxios() // 以太阳为中心的轴
+				initEarthAxios() // 相对地球坐标轴
+				initSun() // 太阳
+				initJupiter() // 木星
+				initEarth() // 地球
+				initMoon() // 月球
+				initSatellite() // 绕地卫星
+				// initText() // 文字
+				animate()
+			}
+
+			draw()
+		</script>
+	</body>
+</html>
