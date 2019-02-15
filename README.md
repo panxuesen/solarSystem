@@ -2,7 +2,7 @@
 Solar system based on three.js
 基于three.js写的太阳系
 
-![](.\img\solarSystem.jpg)
+![](https://raw.githubusercontent.com/Free-loops/solarSystem/master/img/solarSystem.jpg)
 
 ### 启动服务
 - 使用npm安装http-server`npm i http-server -g`
